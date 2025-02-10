@@ -16,10 +16,6 @@ endpoint_url = "https://squatbuddymodel-492294139533.us-central1.run.app/predict
 # gemini:
 model = genai.GenerativeModel(model_name="gemini-1.5-flash")
 
-client = OpenAI(
-    api_key=os.environ.get("OPENAI_API_KEY"),
-)
-
 def process_video(path: str):
 
     # Extract frames from video
