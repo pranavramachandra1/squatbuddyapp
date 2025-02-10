@@ -88,7 +88,7 @@ function App() {
       </p>
 
       <p>
-        also feel free to check out my other stuff <a href="https://pranavramachandra1.github.io/projects/" target="_blank" rel="noopener noreferrer">here</a> :D
+        to learn more about this project, check this out, also feel free to check out my other stuff <a href="https://pranavramachandra1.github.io/projects/squat_buddy" target="_blank" rel="noopener noreferrer">here</a> :D
       </p>
 
     </div>
