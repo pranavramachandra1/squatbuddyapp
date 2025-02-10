@@ -16,13 +16,6 @@ endpoint_url = "https://squatbuddymodel-492294139533.us-central1.run.app/predict
 # gemini:
 model = genai.GenerativeModel(model_name="gemini-1.5-flash")
 
-env_path = Path(__file__).parent.parent / ".env"
-load_dotenv(dotenv_path=env_path)
-
-client = OpenAI(
-    api_key=os.environ.get("OPENAI_API_KEY"),
-)
-
 client = OpenAI(
     api_key=os.environ.get("OPENAI_API_KEY"),
 )
