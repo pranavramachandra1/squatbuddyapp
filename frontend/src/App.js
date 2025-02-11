@@ -1,5 +1,6 @@
 // src/App.js
 import React, { useState } from 'react';
+const API_URL = process.env.REACT_APP_API_URL || "";
 
 function App() {
   const [feedback, setFeedback] = useState('');
@@ -16,7 +17,7 @@ function App() {
       formData.append('video', file);
       
       try {
-        const response = await fetch("https://squatbuddy-app-a8afe5b7d5f8.herokuapp.com/api/upload", {
+        const response = await fetch(`${API_URL}/api/upload`, {
           method: "POST",
           body: formData,
         });
