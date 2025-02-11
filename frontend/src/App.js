@@ -16,7 +16,7 @@ function App() {
       formData.append('video', file);
       
       try {
-        const response = await fetch("http://127.0.0.1:8080/api/upload", {
+        const response = await fetch("https://squatbuddy-app-a8afe5b7d5f8.herokuapp.com/api/upload", {
           method: "POST",
           body: formData,
         });
