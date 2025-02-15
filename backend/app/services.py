@@ -7,6 +7,9 @@ from openai import OpenAI
 import google.generativeai as genai
 from dotenv import load_dotenv
 from pathlib import Path
+import asyncio
+import aiohttp
+import time
 
 from .prompts import *
 
@@ -16,17 +19,17 @@ endpoint_url = "https://squatbuddymodel-492294139533.us-central1.run.app/predict
 # gemini:
 model = genai.GenerativeModel(model_name="gemini-1.5-flash")
 
-def process_video(path: str):
+async def process_video(path: str):
 
     # Extract frames from video
-    results = _extract_frame_data(path)
+    results = await _extract_frame_data(path)
 
     # Generate feedback based on results
     feedback = _generate_feedback(results)
 
     return feedback
 
-def _extract_frame_data(path: str, batch_size=10, sample_rate=3):
+async def _extract_frame_data(path: str, batch_size=50, sample_rate=3):
     """
     Extracts frames from a video, sampling at a defined interval,
     batches them, and sends to API.
@@ -42,7 +45,7 @@ def _extract_frame_data(path: str, batch_size=10, sample_rate=3):
     success, image = vidcap.read()
     
     results = np.zeros(8)
-    batch = []
+    batches, batch = [], []
     frame_count = 0
 
     while success:
@@ -58,21 +61,30 @@ def _extract_frame_data(path: str, batch_size=10, sample_rate=3):
 
             # Send batch when full
             if len(batch) == batch_size:
-                response = _send_batch(batch)
-                results += response
+                batches.append(batch)
                 batch = []  # Reset batch
 
         success, image = vidcap.read()
         frame_count += 1
 
+    vidcap.release()
+    
     # Send remaining frames
     if batch:
-        response = _send_batch(batch)
-        results+=response
+        batches.append(batch)
 
-    vidcap.release()
+    # Send batches to API
+    async with aiohttp.ClientSession() as session:
+        tasks = [_send_batch(batch, session) for batch in batches]
+        results = await asyncio.gather(*tasks)
+    
+    # sum results:
+    output = np.zeros(8)
+    for result in results:
+        output += result
+
     print("Batch processing complete!")
-    return results
+    return output
 
 def _correct_rotation(image, path):
     """Rotates the image if the video contains EXIF rotation metadata."""
@@ -93,14 +105,28 @@ def _correct_rotation(image, path):
 
     return image
 
-def _send_batch(batch):
+# def _send_batch(batch):
+#     """Sends a batch of images to the API (JSON with base64-encoded frames)."""
+#     headers = {"Content-Type": "application/json"}
+#     json_data = {"frames": [base64.b64encode(img).decode() for img in batch]}
+
+#     response = requests.post(endpoint_url, json=json_data, headers=headers)
+#     if response.status_code == 200:
+#         return _process_response(response.json())
+#     else:
+#         return []
+    
+async def _send_batch(batch, session):
     """Sends a batch of images to the API (JSON with base64-encoded frames)."""
     headers = {"Content-Type": "application/json"}
     json_data = {"frames": [base64.b64encode(img).decode() for img in batch]}
-
-    response = requests.post(endpoint_url, json=json_data, headers=headers)
-    if response.status_code == 200:
-        return _process_response(response.json())
+    
+    async with session.post(endpoint_url, json=json_data, headers=headers) as resp:
+        status = resp.status
+        resp_json = await resp.json()
+    
+    if status == 200:
+        return _process_response(resp_json)
     else:
         return []
 

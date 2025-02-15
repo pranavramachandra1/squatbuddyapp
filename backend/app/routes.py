@@ -7,7 +7,7 @@ from .services import process_video
 main = Blueprint('main', __name__)
 
 @main.route('/upload', methods=['POST'])
-def upload_video():
+async def upload_video():
     if 'video' not in request.files:
         return jsonify({"error": "No video file provided"}), 400
 
@@ -21,7 +21,7 @@ def upload_video():
 
     try:
         # Pass the temporary file path to your video processing function.
-        result = process_video(temp_path)
+        result = await process_video(temp_path)
         return jsonify({"message": result})
     except Exception as e:
         return jsonify({"error": str(e)}), 500
